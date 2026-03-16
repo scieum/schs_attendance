@@ -19,6 +19,7 @@ function figmaAssetPlugin(): Plugin {
 }
 
 export default defineConfig({
+  base: '/attendance-check-system/',
   plugins: [
     figmaAssetPlugin(),
     react(),
