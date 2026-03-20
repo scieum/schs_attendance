@@ -41,6 +41,13 @@ var DATA_START_ROW = 3; // 헤더 2행 이후 데이터 시작
  *   rows   - [{seatNumber, value}] (value: "O" | "X" | "")
  */
 function doPost(e) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000); // 최대 10초 대기 후 락 획득
+  } catch (lockErr) {
+    return json({ error: "서버가 혼잡합니다. 잠시 후 다시 시도해주세요." });
+  }
+
   try {
     var data = JSON.parse(e.postData.contents);
     var floor = data.floor;
@@ -98,6 +105,8 @@ function doPost(e) {
     });
   } catch (err) {
     return json({ error: err.toString() });
+  } finally {
+    lock.releaseLock();
   }
 }
 

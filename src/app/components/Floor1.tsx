@@ -13,7 +13,7 @@ type SeatStatus = "none" | "present" | "absent";
 
 const PERIODS = ["1교시", "2교시", "3교시", "4교시"] as const;
 
-import { APPS_SCRIPT_URL } from "../config";
+import { submitAttendance } from "./submitAttendance";
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
@@ -421,16 +421,7 @@ export default function Floor1({ onNavigateBack }: Floor1Props) {
         };
       });
 
-      await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          floor: "1F",
-          period: selectedPeriod,
-          rows,
-        }),
-      });
+      await submitAttendance({ floor: "1F", period: selectedPeriod, rows });
 
       alert(`${selectedPeriod + 1}교시 출석 데이터가 전송되었습니다!`);
     } catch (err) {

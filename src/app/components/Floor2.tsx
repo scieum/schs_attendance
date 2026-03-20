@@ -13,7 +13,7 @@ type SeatStatus = "none" | "present" | "absent";
 
 const PERIODS = ["1교시", "2교시", "3교시", "4교시"] as const;
 
-import { APPS_SCRIPT_URL } from "../config";
+import { submitAttendance } from "./submitAttendance";
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
@@ -280,35 +280,42 @@ function Footer() {
   );
 }
 
-// 2F 좌석 배치: 상단 7개, 왼쪽 세로 4개, 하단 11개
+// 2F 좌석 배치: 상단 14개(64~77), 왼쪽 세로 4개(63~60), 하단 11개(59~49)
 const SEAT_POSITIONS_2F: { num: number; col: number; row: number }[] = [
-  // Top row (columns 2-8, row 1)
-  { num: 64, col: 2, row: 1 },
-  { num: 65, col: 3, row: 1 },
-  { num: 66, col: 4, row: 1 },
-  { num: 67, col: 5, row: 1 },
-  { num: 68, col: 6, row: 1 },
-  { num: 69, col: 7, row: 1 },
-  { num: 70, col: 8, row: 1 },
+  // Top row (columns 1-14, row 1)
+  { num: 64, col: 1,  row: 1 },
+  { num: 65, col: 2,  row: 1 },
+  { num: 66, col: 3,  row: 1 },
+  { num: 67, col: 4,  row: 1 },
+  { num: 68, col: 5,  row: 1 },
+  { num: 69, col: 6,  row: 1 },
+  { num: 70, col: 7,  row: 1 },
+  { num: 71, col: 8,  row: 1 },
+  { num: 72, col: 9,  row: 1 },
+  { num: 73, col: 10, row: 1 },
+  { num: 74, col: 11, row: 1 },
+  { num: 75, col: 12, row: 1 },
+  { num: 76, col: 13, row: 1 },
+  { num: 77, col: 14, row: 1 },
   // Left column (column 1, rows 2-5)
   { num: 63, col: 1, row: 2 },
   { num: 62, col: 1, row: 3 },
   { num: 61, col: 1, row: 4 },
   { num: 60, col: 1, row: 5 },
   // Bottom row (columns 1-11, row 6)
-  { num: 59, col: 1, row: 6 },
-  { num: 58, col: 2, row: 6 },
-  { num: 57, col: 3, row: 6 },
-  { num: 56, col: 4, row: 6 },
-  { num: 55, col: 5, row: 6 },
-  { num: 54, col: 6, row: 6 },
-  { num: 53, col: 7, row: 6 },
-  { num: 52, col: 8, row: 6 },
-  { num: 51, col: 9, row: 6 },
+  { num: 59, col: 1,  row: 6 },
+  { num: 58, col: 2,  row: 6 },
+  { num: 57, col: 3,  row: 6 },
+  { num: 56, col: 4,  row: 6 },
+  { num: 55, col: 5,  row: 6 },
+  { num: 54, col: 6,  row: 6 },
+  { num: 53, col: 7,  row: 6 },
+  { num: 52, col: 8,  row: 6 },
+  { num: 51, col: 9,  row: 6 },
   { num: 50, col: 10, row: 6 },
   { num: 49, col: 11, row: 6 },
 ];
-const ALL_SEATS = SEAT_POSITIONS_2F.map((p) => p.num); // 총 22개
+const ALL_SEATS = SEAT_POSITIONS_2F.map((p) => p.num); // 총 29개
 
 export default function Floor2({ onNavigateBack }: Floor2Props) {
   const { selectedPeriod, setSelectedPeriod } = useAutoPeriod();
@@ -391,16 +398,7 @@ export default function Floor2({ onNavigateBack }: Floor2Props) {
         };
       });
 
-      await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          floor: "2F",
-          period: selectedPeriod,
-          rows,
-        }),
-      });
+      await submitAttendance({ floor: "2F", period: selectedPeriod, rows });
 
       alert(`${selectedPeriod + 1}교시 출석 데이터가 전송되었습니다!`);
     } catch (err) {
@@ -455,7 +453,7 @@ export default function Floor2({ onNavigateBack }: Floor2Props) {
                 {/* Seats Layout - 2F Grid */}
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(11, 1fr)',
+                  gridTemplateColumns: 'repeat(14, 1fr)',
                   gridTemplateRows: 'repeat(6, auto)',
                   gap: '8px',
                   width: '100%',
