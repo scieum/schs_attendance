@@ -134,8 +134,7 @@ function StateBar({
 }
 
 function isEmptySeat(data?: SeatData): boolean {
-  if (!data) return true;
-  return data.name.trim() === "" && data.studentId.trim() === "";
+  return !data;
 }
 
 function Seat({
