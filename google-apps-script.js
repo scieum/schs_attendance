@@ -63,7 +63,7 @@ function doPost(e) {
 
     // 열 번호 계산: 1-indexed (B=2, E=5, ...)
     var col = 5 + group * 4 + period;
-    var sheetName = "Weekly " + floor;
+    var sheetName = "Weekly(" + floor + ")";
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(sheetName);
