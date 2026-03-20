@@ -363,7 +363,7 @@ export default function Floor1({ onNavigateBack }: Floor1Props) {
             newStatuses[p][seatNum] = "absent";
           } else if (val === "O") {
             newStatuses[p][seatNum] = "present";
-          } else if (p === selectedPeriod) {
+          } else {
             newStatuses[p][seatNum] = "present";
           }
         }
