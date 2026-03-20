@@ -135,11 +135,92 @@ function doGet(e) {
   var params = e ? e.parameter : {};
   var action = params.action || "";
 
+  if (action === "submit") {
+    return handleSubmit(params.payload, params.callback);
+  }
+
   if (action === "availability") {
     return getAvailability(params.sheet, params.callback);
   }
 
   return json({ status: "ok", message: "출석 전송 API 정상 작동 중" });
+}
+
+/**
+ * GET 방식 출석 제출 처리 (JSONP)
+ */
+function handleSubmit(payloadStr, callbackName) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (lockErr) {
+    return jsonp({ error: "서버가 혼잡합니다. 잠시 후 다시 시도해주세요." }, callbackName);
+  }
+
+  try {
+    var data = JSON.parse(payloadStr);
+    var floor = data.floor;
+    var period = data.period;
+    var rows = data.rows;
+
+    var now = new Date();
+    var dayOfWeek = now.getDay();
+    var group = DAY_GROUP[dayOfWeek];
+
+    if (group === undefined) {
+      return jsonp({ error: "오늘은 야자 요일이 아닙니다: " + DAY_NAMES[dayOfWeek] + "요일" }, callbackName);
+    }
+
+    var col = 5 + group * 4 + period;
+    var sheetName = "Weekly(" + floor + ")";
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return jsonp({ error: "시트를 찾을 수 없습니다: " + sheetName }, callbackName);
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < DATA_START_ROW) return jsonp({ error: "시트에 데이터가 없습니다." }, callbackName);
+
+    var numRows = lastRow - DATA_START_ROW + 1;
+    var seatColumn = sheet.getRange(DATA_START_ROW, 2, numRows, 1).getValues();
+
+    var seatMap = {};
+    for (var i = 0; i < rows.length; i++) {
+      seatMap[rows[i].seatNumber] = rows[i].value;
+    }
+
+    var rule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(["O", "X"], true)
+      .setAllowInvalid(false)
+      .build();
+
+    var values = [];
+    for (var j = 0; j < seatColumn.length; j++) {
+      var seatNum = parseInt(seatColumn[j][0]);
+      if (isNaN(seatNum) || !seatNum) {
+        values.push([""]);
+      } else {
+        var v = seatMap[seatNum];
+        values.push([v !== undefined ? v : ""]);
+      }
+    }
+
+    var range = sheet.getRange(DATA_START_ROW, col, values.length, 1);
+    range.setDataValidation(rule);
+    range.setValues(values);
+
+    return jsonp({
+      success: true,
+      sheet: sheetName,
+      day: DAY_NAMES[dayOfWeek] + "요일",
+      period: period + 1,
+      column: col,
+    }, callbackName);
+  } catch (err) {
+    return jsonp({ error: err.toString() }, callbackName);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /**
